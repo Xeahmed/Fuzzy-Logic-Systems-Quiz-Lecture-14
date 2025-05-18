@@ -1,0 +1,657 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script>```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lecture 14: Fuzzy Logic Systems Quiz</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(to bottom, #f0f0f0, #ffffff);
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: linear-gradient(to bottom, #333, #000);
+            color: #ddd;
+        }
+
+        header, footer {
+            background: #007BFF;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+        }
+
+        header p, footer p {
+            font-size: 1rem;
+        }
+
+        #dark-mode-toggle {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background: #007BFF;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        #dark-mode-toggle:hover {
+            background: #0056b3;
+        }
+
+        #quiz-container {
+            flex: 1;
+            padding: 2rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #progress-bar {
+            width: 100%;
+            height: 10px;
+            background: #ddd;
+            border-radius: 5px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        #progress {
+            height: 100%;
+            background: #28a745;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+
+        #question-container {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease;
+        }
+
+        body.dark-mode #question-container {
+            background: #444;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        #question-text {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+        }
+
+        .option {
+            display: block;
+            padding: 0.8rem;
+            margin: 0.5rem 0;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        body.dark-mode .option {
+            background: #555;
+        }
+
+        .option:hover {
+            background: #e9ecef;
+        }
+
+        body.dark-mode .option:hover {
+            background: #666;
+        }
+
+        input[type="radio"] {
+            margin-right: 0.5rem;
+        }
+
+        #submit-btn, #next-btn {
+            padding: 0.8rem 1.5rem;
+            margin: 1rem 0.5rem 0 0;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        #submit-btn {
+            background: #007BFF;
+            color: white;
+        }
+
+        #submit-btn:hover {
+            animation: bounce 0.3s;
+            background: #0056b3;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+
+        #next-btn {
+            background: #28.ConcurrentHashMap745;
+            color: white;
+        }
+
+        #next-btn:hover {
+            background: #218838;
+        }
+
+        #feedback {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 5px;
+            direction: rtl;
+            font-size: 1rem;
+            display: none;
+        }
+
+        #feedback.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        #feedback.wrong {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        #score-container {
+            display: none;
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode #score-container {
+            background: #444;
+        }
+
+        #score-container p {
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+            direction: rtl;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            #quiz-container {
+                padding: 1rem;
+            }
+
+            #question-text {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 1.2rem;
+            }
+
+            header p, footer p {
+                font-size: 0.9rem;
+            }
+
+            #dark-mode-toggle {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+
+            #question-container {
+                padding: 1rem;
+            }
+
+            #question-text {
+                font-size: 0.9rem;
+            }
+
+            .option {
+                padding: 0.6rem;
+                font-size: 0.9rem;
+            }
+
+            #submit-btn, #next-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <button id="dark-mode-toggle">Toggle Dark Mode</button>
+    <header>
+        <h1>Lecture 14: Fuzzy Logic Systems Quiz</h1>
+        <p>This quiz page was created by Eng: XE Ahmed Refat – EELU Student Sohag branch</p>
+    </header>
+    <div id="quiz-container">
+        <div id="progress-bar"><div id="progress"></div></div>
+        <div id="question-container">
+            <p id="question-text"></p>
+            <div id="options"></div>
+            <button id="submit-btn">Submit</button>
+            <button id="next-btn" style="display: none;">Next</button>
+            <div id="feedback"></div>
+        </div>
+        <div id="score-container">
+            <h2>Final Score</h2>
+            <p id="score-text"></p>
+            <p id="percentage-text"></p>
+            <p id="performance-text"></p>
+        </div>
+    </div>
+    <footer>
+        <p>© Eng: XE Ahmed Refat – EELU Sohag</p>
+    </footer>
+    <script>
+        function escapeHTML(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        const questions = [
+            // MCQs
+            {
+                question: "What is the primary purpose of fuzzy rules in a fuzzy logic system?",
+                options: ["To convert crisp inputs to crisp outputs", "To describe actions based on fuzzy inputs", "To perform defuzzification", "To calculate the center of gravity"],
+                correct: "B",
+                difficulty: "Easy",
+                explanation: "القواعد الضبابية (Fuzzy Rules) بتستخدم لوصف الإجراءات بناءً على المدخلات الضبابية. بتكون عادةً على شكل جمل if-then زي 'If X is A then Y is B'، وده بيساعد النظام ياخد قرارات بناءً على بيانات غير دقيقة."
+            },
+            {
+                question: "In a fuzzy rule, what are X and Y referred to as?",
+                options: ["Fuzzy sets", "Linguistic variables", "Membership functions", "Crisp values"],
+                correct: "B",
+                difficulty: "Easy",
+                explanation: "في القواعد الضبابية، X و Y هما متغيرات لينجوستيك (Linguistic Variables) زي 'السرعة' أو 'التسارع'، وبتكون القيم بتاعتهم (زي A و B) هي القيم الضبابية (Linguistic Values) المحددة بـ fuzzy sets."
+            },
+            {
+                question: "How many total rules are calculated for the automotive speed controller example in the lecture?",
+                options: ["45", "95", "75", "105"],
+                correct: "B",
+                difficulty: "Medium",
+                explanation: "في مثال وحدة التحكم في سرعة السيارة، عدد القواعد الكلي هو 95، محسوب من $(5 \\times 3 \\times 3 + 5 \\times 3 + 5 \\times 3 + 5 \\times 3 + 3)$، لأن دي كل التركيبات الممكنة للمدخلات."
+            },
+            {
+                question: "What is the first step in applying fuzzy logic to a specific problem?",
+                options: ["Defuzzification", "Rule Evaluation", "Fuzzification", "Crisp Output"],
+                correct: "C",
+                difficulty: "Easy",
+                explanation: "الخطوة الأولى في تطبيق المنطق الضبابي هي Fuzzification، ودي عملية تحويل المدخلات الدقيقة (Crisp Inputs) إلى قيم ضبابية (Fuzzy Inputs) باستخدام دوال العضوية (Membership Functions)."
+            },
+            {
+                question: "What does the fuzzification process produce as output?",
+                options: ["Crisp values", "Fuzzy inputs", "Rule strengths", "Defuzzified outputs"],
+                correct: "B",
+                difficulty: "Easy",
+                explanation: "عملية Fuzzification بتاخد المدخلات الدقيقة (Crisp Inputs) وبطلّع مدخلات ضبابية (Fuzzy Inputs) بناءً على دوال العضوية (Membership Functions)."
+            },
+            {
+                question: "In rule evaluation, what is the role of the 'AND' operator in determining rule strength?",
+                options: ["Takes the maximum strength", "Takes the minimum strength", "Inverts the strength", "Sums the strengths"],
+                correct: "B",
+                difficulty: "Medium",
+                explanation: "في تقييم القواعد (Rule Evaluation)، لو المتطلبات الأولية (Antecedents) متصلة بـ AND، قوة القاعدة (Rule Strength) بتكون أقل قيمة من درجات الحقيقة بتاعة المتطلبات دي."
+            },
+            {
+                question: "What is the name of the rule evaluation method used in the lecture?",
+                options: ["Maxmin", "Minmax", "Centroid", "Meanmax"],
+                correct: "B",
+                difficulty: "Medium",
+                explanation: "طريقة تقييم القواعد المستخدمة في المحاضرة هي Minmax Inference، ودي بتعتمد على أخد أقل قيمة للمتطلبات (min) وأعلى قيمة للمخرجات (max)."
+            },
+            {
+                question: "What is the purpose of defuzzification in a fuzzy logic system?",
+                options: ["To create fuzzy rules", "To convert fuzzy outputs to crisp values", "To evaluate rule strengths", "To fuzzify crisp inputs"],
+                correct: "B",
+                difficulty: "Easy",
+                explanation: "الـ Defuzzification هي العملية اللي بتحوّل المخرجات الضبابية (Fuzzy Outputs) إلى قيم دقيقة (Crisp Values) عشان يتم استخدامها في النظام."
+            },
+            {
+                question: "Which defuzzification method is most commonly used according to the lecture?",
+                options: ["Mean of Maximum", "Center of Gravity (COG)", "Bisector", "Last of Maximum"],
+                correct: "B",
+                difficulty: "Medium",
+                explanation: "أشهر طريقة للـ Defuzzification حسب المحاضرة هي Center of Gravity (COG) أو Centroid Method، ودي بتحسب مركز الثقل للمخرجات الضبابية بعد تقطيع دوال العضوية."
+            },
+            {
+                question: "In the sprinkler system example, what are the input linguistic variables?",
+                options: ["Water duration and soil moisture", "Air temperature and water duration", "Air temperature and soil moisture", "Temperature and watering time"],
+                correct: "C",
+                difficulty: "Easy",
+                explanation: "في مثال نظام الرذاذ، المتغيرات اللغوية للمدخلات هي Air Temperature و Soil Moisture، زي ما ذُكر في المحاضرة."
+            },
+            {
+                question: "In the sprinkler system, what is the output linguistic variable?",
+                options: ["Soil moisture", "Air temperature", "Watering duration", "Rule strength"],
+                correct: "C",
+                difficulty: "Easy",
+                explanation: "المتغير اللغوي للمخرجات في نظام الرذاذ هو Watering Duration، وده اللي بيتحكم فيه النظام بناءً على المدخلات."
+            },
+            {
+                question: "What is the fuzzy output for 'short' watering duration in the sprinkler system example with 92°F and 11% soil moisture?",
+                options: ["0.00", "0.25", "0.46", "0.75"],
+                correct: "A",
+                difficulty: "Hard",
+                explanation: "في مثال نظام الرذاذ، لمدخلات 92°F و 11% رطوبة تربة، المخرج الضبابي لـ 'short' watering duration هو 0.00، زي ما ذُكر في المحاضرة."
+            },
+            {
+                question: "What is the rule strength for 'IF temperature is warm AND soil is moist THEN water duration is medium' in the sprinkler system?",
+                options: ["0.20", "0.46", "0.75", "0.25"],
+                correct: "A",
+                difficulty: "Hard",
+                explanation: "في مثال نظام الرذاذ، قوة القاعدة لـ 'IF temperature is warm (0.20) AND soil is moist (0.75) THEN water duration is medium' هي 0.20، لأن الـ AND بتاخد أقل قيمة."
+            },
+            {
+                question: "What is the defuzzified output for the sprinkler system with 92°F and 11% soil moisture?",
+                options: ["20 minutes", "30 minutes", "38 minutes", "50 minutes"],
+                correct: "C",
+                difficulty: "Hard",
+                explanation: "الناتج الدقيق (Defuzzified Output) لنظام الرذاذ عند 92°F و 11% رطوبة تربة هو 38 دقيقة، محسوب باستخدام طريقة Center of Gravity."
+            },
+            {
+                question: "How is the fuzzy output determined when multiple rules indicate the same output action?",
+                options: ["Take the minimum rule strength", "Take the maximum rule strength", "Average the rule strengths", "Sum the rule strengths"],
+                correct: "B",
+                difficulty: "Medium",
+                explanation: "لما أكتر من قاعدة بتدّي نفس الإجراء (Output Action)، المخرج الضبابي بيتحدد بأخد أعلى قوة قاعدة (Maximum Rule Strength) لكل اللي بيشيروا لنفس الإجراء."
+            },
+            {
+                question: "In the sprinkler system, what is the domain range for the 'Moist' soil moisture label?",
+                options: ["5-12%", "10-22%", "20-30%", "0-5%"],
+                correct: "B",
+                difficulty: "Medium",
+                explanation: "في نظام الرذاذ، النطاق (Domain) لتسمية 'Moist' لرطوبة التربة هو 10-22%، زي ما ذُكر في دوال العضوية بالمحاضرة."
+            },
+            {
+                question: "What happens to membership functions during the COG defuzzification method?",
+                options: ["They are summed", "They are inverted", "They are truncated", "They are averaged"],
+                correct: "C",
+                difficulty: "Medium",
+                explanation: "في طريقة Center of Gravity (COG) للـ Defuzzification، دوال العضوية بتتقطّع (Truncated) فوق القيمة المحددة بـ Fuzzy Output، وبعدين بيتم حساب مركز الثقل."
+            },
+            {
+                question: "In the sprinkler system, what is the watering duration if temperature is cold and soil is wet?",
+                options: ["Short", "Medium", "Long", "None"],
+                correct: "A",
+                difficulty: "Easy",
+                explanation: "حسب جدول القواعد في نظام الرذاذ، لو الـ Temperature هي Cold والتربة Wet، مدة الري (Watering Duration) هتكون Short."
+            },
+            {
+                question: "What is the role of membership functions in fuzzification?",
+                options: ["To evaluate rules", "To convert crisp inputs to fuzzy inputs", "To defuzzify outputs", "To calculate rule strengths"],
+                correct: "B",
+                difficulty: "Easy",
+                explanation: "دوال العضوية (Membership Functions) في الـ Fuzzification بتستخدم لتحويل المدخلات الدقيقة (Crisp Inputs) إلى مدخلات ضبابية (Fuzzy Inputs)."
+            },
+            {
+                question: "How many steps are involved in applying fuzzy logic to a specific problem?",
+                options: ["Two", "Three", "Four", "Five"],
+                correct: "B",
+                difficulty: "Easy",
+                explanation: "تطبيق المنطق الضبابي بيتضمن تلات خطوات: Fuzzification، Rule Evaluation، و Defuzzification، زي ما ذُكر في المحاضرة."
+            },
+            // True/False
+            {
+                question: "Fuzzy rules are always in the form of if-then statements.",
+                correct: "True",
+                difficulty: "Easy",
+                explanation: "صح، القواعد الضبابية (Fuzzy Rules) دايمًا بتكون على شكل جمل if-then، زي 'If X is A then Y is B'، عشان تصف الإجراءات بناءً على المدخلات."
+            },
+            {
+                question: "The total number of rules in a fuzzy system must always include all possible combinations of inputs.",
+                correct: "False",
+                difficulty: "Medium",
+                explanation: "غلط، في الممارسة، نظام المنطق الضبابي مش لازم يشمل كل التركيبات الممكنة للمدخلات. بيتم اختيار القواعد المهمة بس، زي ما ذُكر في مثال وحدة التحكم في السرعة."
+            },
+            {
+                question: "Fuzzification converts crisp inputs to fuzzy inputs using membership functions.",
+                correct: "True",
+                difficulty: "Easy",
+                explanation: "صح، الـ Fuzzification بتحوّل المدخلات الدقيقة (Crisp Inputs) إلى مدخلات ضبابية (Fuzzy Inputs) باستخدام دوال العضوية (Membership Functions)."
+            },
+            {
+                question: "In rule evaluation, the OR operator takes the minimum strength of the antecedents.",
+                correct: "False",
+                difficulty: "Medium",
+                explanation: "غلط، الـ OR operator في تقييم القواعد بياخد أعلى قوة (Maximum Strength) للمتطلبات الأولية، مش أقل قيمة زي الـ AND."
+            },
+            {
+                question: "The minmax inference method uses the minimum of antecedent strengths and maximum of consequent strengths.",
+                correct: "True",
+                difficulty: "Medium",
+                explanation: "صح، طريقة Minmax Inference بتستخدم أقل قيمة (Minimum) لقوة المتطلبات الأولية (Antecedents) وأعلى قيمة (Maximum) لقوة المخرجات (Consequents)."
+            },
+            {
+                question: "Defuzzification is performed before rule evaluation in a fuzzy logic system.",
+                correct: "False",
+                difficulty: "Easy",
+                explanation: "غلط، الـ Defuzzification بتيجي بعد تقييم القواعد (Rule Evaluation) في نظام المنطق الضبابي، لأنها بتحوّل المخرجات الضبابية لقيم دقيقة."
+            },
+            {
+                question: "The Center of Gravity (COG) method is used in the sprinkler system example for defuzzification.",
+                correct: "True",
+                difficulty: "Medium",
+                explanation: "صح، في مثال نظام الرذاذ، طريقة Center of Gravity (COG) هي اللي اُستخدمت للـ Defuzzification عشان تحسب الناتج الدقيق."
+            },
+            {
+                question: "In the sprinkler system, the watering duration is always long when soil is dry.",
+                correct: "True",
+                difficulty: "Medium",
+                explanation: "صح، حسب جدول القواعد في نظام الرذاذ، لما التربة تكون Dry، مدة الري (Watering Duration) دايمًا بتكون Long، بغض النظر عن درجة الحرارة."
+            },
+            {
+                question: "The fuzzy output for 'medium' watering duration is 0.25 in the sprinkler system example.",
+                correct: "False",
+                difficulty: "Hard",
+                explanation: " غلط، المخرج الضبابي لـ 'medium' watering duration في مثال نظام الرذاذ هو 0.46، مش 0.25، زي ما ذُكر في المحاضرة."
+            },
+            {
+                question: "The sprinkler system uses only air temperature as an input variable.",
+                correct: "False",
+                difficulty: "Easy",
+                explanation: "غلط، نظام الرذاذ بيستخدم متغيرين للمدخلات: Air Temperature و Soil Moisture، مش Air Temperature لوحدها."
+            },
+            {
+                question: "Membership functions are used to define linguistic values in fuzzy logic systems.",
+                correct: "True",
+                difficulty: "Easy",
+                explanation: "صح، دوال العضوية (Membership Functions) بتستخدم لتحديد القيم اللغوية (Linguistic Values) زي 'Hot' أو 'Moist' في أنظمة المنطق الضبابي."
+            },
+            {
+                question: "The rule strength for 'IF temperature is hot AND soil is moist' is 0.46 in the sprinkler system.",
+                correct: "False",
+                difficulty: "Hard",
+                explanation: "غلط، قوة القاعدة لـ 'IF temperature is hot (0.46) AND soil is moist (0.75)' هي 0.46، لأن الـ AND بتاخد أقل قيمة، بس القاعدة نفسها مش بتقول كده بالظبط."
+            },
+            {
+                question: "The defuzzified output of 38 minutes is calculated using the COG method in the sprinkler system.",
+                correct: "True",
+                difficulty: "Hard",
+                explanation: "صح، الناتج الدقيق 38 دقيقة في نظام الرذاذ اُتحسب باستخدام طريقة Center of Gravity (COG) للـ Defuzzification."
+            },
+            {
+                question: "Fuzzy logic systems require crisp inputs to produce fuzzy outputs.",
+                correct: "True",
+                difficulty: "Easy",
+                explanation: "صح، أنظمة المنطق الضبابي بتاخد مدخلات دقيقة (Crisp Inputs) وبتنتج مخرجات ضبابية (Fuzzy Outputs) في مرحلة الـ Fuzzification."
+            },
+            {
+                question: "The sprinkler system example uses only two rules to determine watering duration.",
+                correct: "False",
+                difficulty: "Medium",
+                explanation: "غلط، مثال نظام الرذاذ بيستخدم أكتر من قاعدتين لتحديد مدة الري، زي ما واضح في جدول القواعد اللي فيه تركيبات كتير."
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        const totalQuestions = questions.length;
+
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options');
+        const submitBtn = document.getElementById('submit-btn');
+        const nextBtn = document.getElementById('next-btn');
+        const feedback = document.getElementById('feedback');
+        const progress = document.getElementById('progress');
+        const quizContainer = document.getElementById('quiz-container');
+        const scoreContainer = document.getElementById('score-container');
+        const scoreText = document.getElementById('score-text');
+        const percentageText = document.getElementById('percentage-text');
+        const performanceText = document.getElementById('performance-text');
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+
+        function loadQuestion() {
+            const q = questions[currentQuestion];
+            questionText.innerHTML = `${currentQuestion + 1}. ${escapeHTML(q.question)} (${q.difficulty})`;
+            optionsContainer.innerHTML = '';
+            if (q.options) {
+                q.options.forEach((option, index) => {
+                    const label = String.fromCharCode(65 + index); // A, B, C, D
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    div.innerHTML = `<input type="radio" name="answer" value="${label}"> ${label}. ${escapeHTML(option)}`;
+                    optionsContainer.appendChild(div);
+                });
+            } else {
+                ['True', 'False'].forEach(option => {
+                    const div = document.createElement('div');
+                    div.className = 'option';
+                    div.innerHTML = `<input type="radio" name="answer" value="${option}"> ${option}`;
+                    optionsContainer.appendChild(div);
+                });
+            }
+            submitBtn.style.display = 'inline-block';
+            nextBtn.style.display = 'none';
+            feedback.style.display = 'none';
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const percentage = ((currentQuestion + 1) / totalQuestions) * 100;
+            progress.style.width = `${percentage}%`;
+        }
+
+        submitBtn.addEventListener('click', () => {
+            const selected = document.querySelector('input[name="answer"]:checked');
+            if (!selected) {
+                feedback.style.display = 'block';
+                feedback.className = 'wrong';
+                feedback.innerHTML = 'من فضلك اختار إجابة!';
+                return;
+            }
+            const answer = selected.value;
+            const q = questions[currentQuestion];
+            const isCorrect = (q.options && answer === q.correct) || (!q.options && answer === q.correct);
+            feedback.style.display = 'block';
+            feedback.className = isCorrect ? 'correct' : 'wrong';
+            feedback.innerHTML = isCorrect ? 'صحيح! ' + q.explanation : 'غلط! ' + q.explanation;
+            if (isCorrect) score++;
+            submitBtn.style.display = 'none';
+            nextBtn.style.display = 'inline-block';
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentQuestion++;
+            if (currentQuestion < totalQuestions) {
+                loadQuestion();
+            } else {
+                showScore();
+            }
+        });
+
+        function showScore() {
+            quizContainer.style.display = 'none';
+            scoreContainer.style.display = 'block';
+            const percentage = (score / totalQuestions) * 100;
+            scoreText.innerHTML = `الدرجة النهائية: ${score} من ${totalQuestions}`;
+            percentageText.innerHTML = `النسبة: ${percentage.toFixed(2)}%`;
+            if (percentage >= 80) {
+                performanceText.innerHTML = 'ممتاز! عملت شغل عالي جداً، كمل كده!';
+            } else if (percentage >= 50) {
+                performanceText.innerHTML = 'كويس! بس فيه مجال للتحسين، ركز أكتر.';
+            } else {
+                performanceText.innerHTML = 'محتاج تذاكر أكتر! جرب تراجع الـ lecture تاني.';
+            }
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode');
+            darkModeToggle.textContent = document.body.classList.contains('dark-mode') ? 'Light Mode' : 'Dark Mode';
+        });
+
+        loadQuestion();
+    </script>
+</body>
+</html>
+```
